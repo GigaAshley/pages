@@ -40,14 +40,20 @@
   <img id="7" class="arrow" src="arrow.png">
   
   <script>
-    document.addEventListener("DOMContentLoaded", function(event) { 
+    document.addEventListener("DOMContentLoaded", function(event)
+    { 
       var delay = 1000;
     
       setInterval(function()
-        {
-          document.getElementById(getRandomInt(1, 8));
-        }, delay);
-    });   
+      {
+          var e = document.getElementById(getRandomInt(1, 8));
+        
+          setTimeout(function()
+          {
+            e.classList.remove('active');
+          }, 100);
+      }, delay);
+    });
       
     // The maximum is exclusive and the minimum is inclusive
     function getRandomInt(min, max) {
