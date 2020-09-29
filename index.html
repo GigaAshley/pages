@@ -14,7 +14,7 @@
   <style>
     .arrow {
       border-width: 3px;
-      border-type: solid;
+      border-style: solid;
       border-color: white;
       
       -webkit-transition : border 2500ms ease-out;
@@ -48,6 +48,7 @@
       {
           var e = document.getElementById(getRandomInt(1, 8));
         
+          e.classList.add('active');        
           setTimeout(function()
           {
             e.classList.remove('active');
