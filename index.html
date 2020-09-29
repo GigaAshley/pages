@@ -1,1 +1,60 @@
-test
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Card Shuffler</title>
+  <meta name="description" content="Pile shuffling with randomness!">
+  <meta name="author" content="Abby Barnum">
+  <meta name='viewport' 
+     content='width=device-width, initial-scale=1.0, maximum-scale=1.0, 
+     user-scalable=0' >
+
+  <style>
+    .arrow {
+      border-width: 3px;
+      border-type: solid;
+      border-color: white;
+      
+      -webkit-transition : border 2500ms ease-out;
+      -moz-transition : border 2500ms ease-out;
+      -o-transition : border 2500ms ease-out;
+      transition : border 2500ms ease-out;
+    }
+    
+    .active {
+      border-color: lightblue;
+    }
+  </style>
+
+</head>
+
+<body>
+  <img id="1" class="arrow" src="arrow.png">
+  <img id="2" class="arrow" src="arrow.png">
+  <img id="3" class="arrow" src="arrow.png">
+  <img id="4" class="arrow" src="arrow.png">
+  <img id="5" class="arrow" src="arrow.png">
+  <img id="6" class="arrow" src="arrow.png">
+  <img id="7" class="arrow" src="arrow.png">
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function(event) { 
+      var delay = 1000;
+    
+      setInterval(function()
+        {
+          document.getElementById(getRandomInt(1, 8));
+        }, delay);
+    });   
+      
+    // The maximum is exclusive and the minimum is inclusive
+    function getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min) + min);
+    }
+  </script>
+</body>
+</html>
