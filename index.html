@@ -26,7 +26,9 @@
       display: none;
     }
     
-    #a1, #c1 {      
+    #a1, #c1 {
+      display: none;
+      
       top: 0;
       left: 45%;
       
@@ -69,6 +71,8 @@
     }
     
     #a7, #c7 {
+      display: none;
+      
       top: 0;
       left: 0;
 
@@ -102,7 +106,7 @@
     
       setInterval(function()
       {
-          var n = getRandomInt(1, 8);
+          var n = getRandomInt(2, 7);
           console.log(n);
         
           var a = document.getElementById('a' + n);
