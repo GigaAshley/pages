@@ -98,7 +98,7 @@
   <script>
     document.addEventListener("DOMContentLoaded", function(event)
     { 
-      var delay = 1000;
+      var delay = 600;
     
       setInterval(function()
       {
@@ -114,7 +114,7 @@
           {
             a.classList.remove('hidden');
             c.classList.add('hidden');
-          }, 900);
+          }, delay - 100);
       }, delay);
     });
       
