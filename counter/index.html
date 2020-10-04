@@ -1,0 +1,73 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Card Shuffler</title>
+  <meta name="description" content="Perfect randomness!">
+  <meta name="author" content="Abby Barnum">
+  <meta name='viewport' 
+     content='width=device-width, initial-scale=1.0, maximum-scale=1.0, 
+     user-scalable=0' >
+
+  <style>
+    body {
+      overflow: hidden;
+    }
+  </style>
+
+</head>
+
+<body>
+  <h1 id="counter">#</h1>
+  
+  <button type="button" onclick="start()" id="button">Start</button>
+  
+  <script>
+    var delay = 800;
+    var interval;
+    var counted;
+    
+    function start()
+    {      
+      document.getElementById("button").textContent = Restart;
+      
+      counted = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60];
+      counted = shuffle(counted);
+      
+      if (interval)
+        clearInterval(interval);
+      interval = setInterval(function()
+      {
+        if (counted.length > 0)
+        {
+          var n = counted.pop();
+          console.log(n);
+
+          document.getElementById("counter").textContent = n;
+        }
+      }, delay);
+    }
+      
+    function shuffle(array) {
+      var currentIndex = array.length, temporaryValue, randomIndex;
+
+      // While there remain elements to shuffle...
+      while (0 !== currentIndex) {
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+      }
+
+      return array;
+    }
+  </script>
+</body>
+</html>
