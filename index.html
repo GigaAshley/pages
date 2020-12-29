@@ -1151,8 +1151,10 @@
         function RandomElement(list) {
             return list[Math.floor(Math.random() * list.length)];
         }
-
-        $(document).ready(function() {
+        
+        function Go() {
+            $('#targets').html('');
+            
             var randomMission = RandomElement(missions);
             var targets = randomMission.targetList;
             var disguises = randomMission.disguises;
@@ -1169,6 +1171,13 @@
             }
 
             $('#wildcard').html(randomExtra);
+        }
+
+        $(document).ready(function() {            
+            $('body').keydown(function(e) {
+                if (e.which == 82)
+                    Go();
+            });
 
             $('body').click(function(e) {
                 $('.invisible').first().removeClass('invisible');
