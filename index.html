@@ -55,10 +55,6 @@
             color: red;
         }
         
-        #wildcard:not(.invisible) {
-            transition: none;
-        }
-        
         body::after {
           content: "";
           background: url("https://vignette.wikia.nocookie.net/hitman/images/5/5f/ICA_Logo.png/revision/latest?cb=20161103185906");
@@ -1181,7 +1177,7 @@
         $(document).ready(function() {            
             $('body').keydown(function(e) {
                 if (e.which == 82)
-                    Go();
+                    location.reload();
             });
 
             $('body').click(function(e) {
