@@ -1154,6 +1154,7 @@
         
         function Go() {
             $('#targets').html('');
+            $('#wildcard').addClass('invisible');
             
             var randomMission = RandomElement(missions);
             var targets = randomMission.targetList;
