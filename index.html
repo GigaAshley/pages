@@ -1098,7 +1098,7 @@
             var methods = randomMission.melee;
 
             for (let index = 0; index < targets.length; index++) {
-                const element = array[index];
+                const element = targets[index];
 
                 $('#targets').append(`<p id="target-${index}">${targets[index]}</p><p id="target-${index}-disguise">${RandomElement(disguises)}</p><p id="target-${index}-method">${RandomElement(methods)}</p>`);
             }
