@@ -13,7 +13,7 @@
 
     <style>
         p {
-            font: bold 6em/1.25em Helvetica, "Helvetica Neue", Arial, sans-serif;
+            font: bold 2em/1.25em Helvetica, "Helvetica Neue", Arial, sans-serif;
             color: #000;
         }
 
@@ -25,14 +25,20 @@
             color: deeppink;
         }
         
-        .tomato {
+        .method {
             color: tomato;
+        }
+
+        .wildcard {
+            color: red;
         }
     </style>
 
 </head>
 
 <body>
+    <p id="mission"></p>
+
     <div id="targets"></div>
 
     <p id="wildcard"></p>
@@ -1111,12 +1117,17 @@
             var targets = randomMission.targetList;
             var disguises = randomMission.disguises;
             var methods = randomMission.melee;
+            var randomExtra = RandomElement(extras);
+
+            $('#mission').html(randomMission.missionTitle);
 
             for (let index = 0; index < targets.length; index++) {
                 const element = targets[index];
 
                 $('#targets').append(`<p>You must kill <span class="target">${targets[index]}</span><br/>disguised as <span class="disguise">${RandomElement(disguises)}</span><br/>with <span class="method">${RandomElement(methods)}</span></p>`);
             }
+
+            $('#wildcard').html(randomExtra);
         });
     </script>
 </body>
