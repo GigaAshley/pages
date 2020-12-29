@@ -1173,15 +1173,21 @@
 
             $('#wildcard').html(randomExtra);
         }
+        
+        function Proceed() {
+            $('.invisible').first().removeClass('invisible');
+        }
 
         $(document).ready(function() {            
             $('body').keydown(function(e) {
                 if (e.which == 82)
-                    location.reload();
+                    location.reload();                
+                else if (e.which == 32)
+                    Proceed();
             });
 
             $('body').click(function(e) {
-                $('.invisible').first().removeClass('invisible');
+                Proceed();
             });
             
             Go();
