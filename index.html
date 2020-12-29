@@ -12,7 +12,22 @@
         user-scalable=0' >
 
     <style>
+        p {
+            font: bold 6em/1.25em Helvetica, "Helvetica Neue", Arial, sans-serif;
+            color: #000;
+        }
+
+        .target {
+            color: hotpink;
+        }
         
+        .disguise {
+            color: deeppink;
+        }
+        
+        .tomato {
+            color: tomato;
+        }
     </style>
 
 </head>
@@ -1100,7 +1115,7 @@
             for (let index = 0; index < targets.length; index++) {
                 const element = targets[index];
 
-                $('#targets').append(`<p id="target-${index}">${targets[index]}</p><p id="target-${index}-disguise">${RandomElement(disguises)}</p><p id="target-${index}-method">${RandomElement(methods)}</p>`);
+                $('#targets').append(`<p>You must kill <span class="target">${targets[index]}</span><br/>disguised as <span class="disguise">${RandomElement(disguises)}</span><br/>with <span class="method">${RandomElement(methods)}</span></p>`);
             }
         });
     </script>
