@@ -100,6 +100,7 @@
             "Kill 4 people while wearing the same outfit as them",
             "Cause an environmental accident on 3 people"
         ];
+        var extrasReset = [];
 
         var suitStarts = [
             "Red Carpet",
@@ -384,7 +385,8 @@
                 "Movie Crew",
                 "Security Officer",
                 "SFX Crew"
-            ]
+            ],
+            extras: []
         };
 
         var landslide = {
@@ -433,7 +435,8 @@
                 "Kitchen Assistant",
                 "Salvatore Bravuomo",
                 "Bohemian"
-            ]
+            ],
+            extras: []
         };
 
         var agc = {
@@ -495,7 +498,8 @@
                 "Prisoner",
                 "Shopkeeper",
                 "Waiter"
-            ]
+            ],
+            extras: []
         };
 
         var ahbos = {
@@ -531,7 +535,8 @@
                 "Soldier",
                 "Shopkeeper",
                 "Waiter"
-            ]
+            ],
+            extras: []
         };
 
         var c27 = {
@@ -587,7 +592,8 @@
                 "Recording Crew",
                 "Stalker",
                 "Waiter"
-            ]
+            ],
+            extras: []
         };
 
         var ff = {
@@ -629,7 +635,8 @@
                 "Militia Technician",
                 "Point Man",
                 "Scarecrow"
-            ]
+            ],
+            extras: []
         };
 
         var si = {
@@ -703,7 +710,8 @@
                 "VIP Patient (Dexter)",
                 "VIP Patient (Portman)",
                 "Yoga Instructor"
-            ]
+            ],
+            extras: []
         };
 
         var ts = {
@@ -747,7 +755,8 @@
                 "Kitchen Staff",
                 "Waiter",
                 "Cult Member"
-            ]
+            ],
+            extras: []
         };
 
         var ta = {
@@ -771,7 +780,8 @@
                 "Brother Akram",
                 "The Superfan",
                 "Bodyguard"
-            ]
+            ],
+            extras: []
         };
 
         var pz = {
@@ -806,7 +816,8 @@
                 "Surgeon",
                 "VIP Patient (Dexter)",
                 "Yoga Instructor"
-            ]
+            ],
+            extras: []
         };
 
         var tfl = {
@@ -870,7 +881,8 @@
                 "Blue Seed Driver",
                 "Kronstadt Driver",
                 "Kronstadt Mechanic"
-            ]
+            ],
+            extras: []
         };
 
         var ths = {
@@ -925,7 +937,8 @@
                 "Gardener",
                 "Chef",
                 "Drug Lab Worker"
-            ]
+            ],
+            extras: []
         };
 
         var cag = {
@@ -985,7 +998,8 @@
                 "Bollywood Crew",
                 "Bollywood Bodyguard",
                 "Painter"
-            ]
+            ],
+            extras: []
         };
 
         var al = {
@@ -1040,7 +1054,8 @@
                 "James Batty",
                 "Plumber",
                 "Sheriff Masterson"
-            ]
+            ],
+            extras: []
         };
 
         var tas = {
@@ -1095,7 +1110,8 @@
                 "Butler",
                 "Castle Staff",
                 "Master of Ceremonies"
-            ]
+            ],
+            extras: []
         };
 
         var missions = [
@@ -1127,30 +1143,67 @@
         };
     </script>
     <script>
-        function RandomElement(list) {
+        function GetRandomElement(list) {
             return list[Math.floor(Math.random() * list.length)];
+        }
+
+        function RandomDisguise(randomMission) {
+            if (randomMission.disguises.length == 0) {
+                randomMission.disguises = randomMission.disguisesReset.slice();
+            }
+
+            return GetAndRemove(randomMission.disguises, GetRandomElement(randomMission.disguises));
+        }
+
+        function RandomMethod(randomMission) {
+            if (randomMission.melee.length == 0) {
+                randomMission.melee = randomMission.meleeReset.slice();
+            }
+
+            return GetAndRemove(randomMission.melee, GetRandomElement(randomMission.melee));
+        }
+        
+        function GetAndRemove(array, item) {
+            const index = array.indexOf(item);
+            if (index > -1) {
+                return array.splice(index, 1);
+            }
+        }
+        
+        function RandomExtra(randomMission) {
+            var allExtras = extras.concat(randomMission.extras);
+            if (allExtras.length == 0) {
+                extras = extrasReset.slice();
+                randomMission.extras = randomMission.extrasReset.slice();
+            }
+            
+            var extra = RandomElement(allExtras, false);
+            
+            if (extras.indexOf(extra) > -1)
+                return GetAndRemove(extras, extra);
+            else
+                return GetAndRemove(randomMission.extras, extra);
         }
         
         function Go() {
             $('#targets').html('');
             $('#wildcard').addClass('hidden invisible');
             
-            var randomMission = RandomElement(missions);
+            var randomMission = GetRandomElement(missions);
             var targets = randomMission.targetList;
-            var disguises = randomMission.disguises;
-            var methods = randomMission.melee;
-            var missionExtras = randomMission.hasOwnProperty('extras') ? randomMission.extras : [];
-            var randomExtra = RandomElement(extras.concat(missionExtras));
+            var disguise = RandomDisguise(randomMission);
+            var method = RandomMethod(randomMission);
+            var extra = RandomExtra(randomMission);
 
             $('#mission').html(randomMission.missionTitle);
 
             for (let index = 0; index < targets.length; index++) {
                 const element = targets[index];
 
-                $('#targets').append(`<p class="invisible">You must kill <span class="target">${targets[index]}</span></p><p class="invisible">disguised as <span class="disguise">${RandomElement(disguises)}</span></p><p class="invisible">with <span class="method">${RandomElement(methods)}</span></p>`);
+                $('#targets').append(`<p class="invisible">You must kill <span class="target">${targets[index]}</span></p><p class="invisible">disguised as <span class="disguise">${disguise}</span></p><p class="invisible">with <span class="method">${method}</span></p>`);
             }
 
-            $('#wildcard').html(randomExtra);
+            $('#wildcard').html(extra);
         }
         
         function Proceed() {
@@ -1158,7 +1211,7 @@
             $('.invisible').first().removeClass('invisible');
         }
 
-        $(document).ready(function() {            
+        $(document).ready(function() {
             $('body').keydown(function(e) {
                 if (e.which == 82)
                     Go();               
@@ -1169,6 +1222,16 @@
             $('body').click(function(e) {
                 Proceed();
             });
+            
+            for (let index = 0; index < missions.length; index++) {
+                const mission = missions[index];
+                
+                mission.diguisesReset = mission.disguises.slice();
+                mission.meleeReset = mission.melee.slice();
+                mission.extrasReset = mission.extras.slice();
+                
+                extrasReset = extras.slice();
+            }
             
             Go();
         });
