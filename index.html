@@ -1177,7 +1177,7 @@
                 randomMission.extras = randomMission.extrasReset.slice();
             }
             
-            var extra = RandomElement(allExtras, false);
+            var extra = GetRandomElement(allExtras, false);
             
             if (extras.indexOf(extra) > -1)
                 return GetAndRemove(extras, extra);
