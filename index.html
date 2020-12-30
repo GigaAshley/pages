@@ -1191,14 +1191,16 @@
             
             var randomMission = GetRandomElement(missions);
             var targets = randomMission.targetList;
-            var disguise = RandomDisguise(randomMission);
-            var method = RandomMethod(randomMission);
+            var disguise, method;
             var extra = RandomExtra(randomMission);
 
             $('#mission').html(randomMission.missionTitle);
 
             for (let index = 0; index < targets.length; index++) {
                 const element = targets[index];
+
+                disguise = RandomDisguise(randomMission);
+                method = RandomMethod(randomMission);
 
                 $('#targets').append(`<p class="invisible">You must kill <span class="target">${targets[index]}</span></p><p class="invisible">disguised as <span class="disguise">${disguise}</span></p><p class="invisible">with <span class="method">${method}</span></p>`);
             }
