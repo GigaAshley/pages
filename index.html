@@ -26,6 +26,8 @@
             border-radius: 3px;
             font-size: 28px;
             font-weight: bold;
+            cursor:pointer;
+            margin-top:25px;
         }
 
         .invisible {
@@ -88,7 +90,7 @@
           margin-right: 282.5px;
           margin-bottom: -150px;*/
           position: absolute;
-          z-in;
+          z-index: -100;
         }
     </style>
 
@@ -1247,8 +1249,9 @@
                     Proceed();
             });
             
-            $('#reroll-button').click(function() {
-               Go(); 
+            $('#reroll-button').click(function(e) {
+                e.stopPropagation();                
+                Go(); 
             });
 
             $('body').click(function(e) {
