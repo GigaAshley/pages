@@ -16,6 +16,17 @@
             opacity: 1;
             transition: all 1s;
         }
+        
+        #reroll-button {
+            color: white;
+            background: red;
+            border: none;
+            padding: 10px 14px;
+            width: 100%;
+            border-radius: 3px;
+            font-size: 28px;
+            font-weight: bold;
+        }
 
         .invisible {
             opacity: 0;
@@ -1230,6 +1241,10 @@
                     Go();               
                 else if (e.which == 32)
                     Proceed();
+            });
+            
+            $('#reroll-button').click(function() {
+               Go(); 
             });
 
             $('body').click(function(e) {
