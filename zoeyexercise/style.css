@@ -1,3 +1,12 @@
 body {
-  background: pink;
+  margin: 0;
+  padding: 0;
+  
+  overflow: hidden; 
+}
+
+#app {
+    width: 320px;
+    height: 460px;
+    background: pink;
 }
