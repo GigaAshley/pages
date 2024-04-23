@@ -23,6 +23,7 @@
     <h1>Random Card Generator</h1>
     <label for="cardType">Choose a card type:</label>
     <select id="cardType">
+        <option value="all">Any</option> <!-- Added option for any card type -->
         <option value="Monster">Monster</option>
         <option value="Spell">Spell</option>
         <option value="Counter">Counter</option>
@@ -41,6 +42,8 @@
         <option value="👊">👊</option>
         <option value="☀️">☀️</option>
     </select>
+    <label for="includeRandom">Include only cards with 'random' in text:</label>
+    <input type="checkbox" id="includeRandom">
     <button onclick="getRandomCard()">Generate Random Card</button>
     <h2>Random Card Details:</h2>
     <div id="cardDetails"></div>
@@ -64,9 +67,25 @@
         function getRandomCard() {
             const selectedCardType = document.getElementById('cardType').value;
             const selectedType = document.getElementById('type').value;
-            const filteredCards = window.cards.filter(card => card['card type'] === selectedCardType && (selectedType === 'all' || card['type'] === selectedType));
-            const randomCard = filteredCards[Math.floor(Math.random() * filteredCards.length)];
-            displayCardDetails(randomCard);
+            const includeRandom = document.getElementById('includeRandom').checked;
+        
+            const filteredCards = window.cards.filter(card => {
+                // Check card type and type selection
+                const typeMatch = (selectedCardType === 'all' || card['card type'] === selectedCardType);
+                const typeIconMatch = (selectedType === 'all' || card['type'] === selectedType);
+                // Check for 'random' in text if checkbox is checked
+                const randomTextMatch = !includeRandom || (card['text'] && card['text'].toLowerCase().includes('random'));
+                
+                return typeMatch && typeIconMatch && randomTextMatch;
+            });
+        
+            if(filteredCards.length > 0) {
+                const randomCard = filteredCards[Math.floor(Math.random() * filteredCards.length)];
+                displayCardDetails(randomCard);
+            } else {
+                const detailsDiv = document.getElementById('cardDetails');
+                detailsDiv.innerHTML = '<p>No cards match the selected criteria.</p>';
+            }
         }
         
         function displayCardDetails(card) {
