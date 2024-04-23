@@ -34,6 +34,7 @@
     </select>
     <label for="type">Choose a type:</label>
     <select id="type">
+        <option value="all">Any</option> <!-- Added option for all types -->
         <option value="😈">😈</option>
         <option value="🧿">🧿</option>
         <option value="🔥">🔥</option>
@@ -63,7 +64,7 @@
         function getRandomCard() {
             const selectedCardType = document.getElementById('cardType').value;
             const selectedType = document.getElementById('type').value;
-            const filteredCards = window.cards.filter(card => card['card type'] === selectedCardType && card['type'] === selectedType);
+            const filteredCards = window.cards.filter(card => card['card type'] === selectedCardType && (selectedType === 'all' || card['type'] === selectedType));
             const randomCard = filteredCards[Math.floor(Math.random() * filteredCards.length)];
             displayCardDetails(randomCard);
         }
