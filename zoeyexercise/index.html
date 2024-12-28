@@ -1,1275 +1,1370 @@
-<!doctype html>
-
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="utf-8">
-
-    <title>Hitsmas!</title>
-    <meta name="description" content="Hitsmas generator for fun">
-    <meta name="author" content="Abby Barnum">
-    <meta name='viewport' 
-        content='width=device-width, initial-scale=1.0, maximum-scale=1.0, 
-        user-scalable=0' >
+    <title>Hitsmas</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
     <style>
-        * {
-            opacity: 1;
-            transition: all 1s;
-        }
-        
-        #reroll-button {
-            color: white;
-            background: red;
-            border: none;
-            padding: 10px 14px;
-            width: 100%;
-            border-radius: 3px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor:pointer;
-            margin-top:25px;
-        }
-
-        .invisible {
-            opacity: 0;
-        }
-        
-        .hidden {
-            display: none;
-        }
-
-        #mission {
-            color: royalblue;
-        }
-
-        #targets {
-            margin: 20px 0px;
-        }
-
-        p {
-            font: bold 2em/1.25em Helvetica, "Helvetica Neue", Arial, sans-serif;
-            color: #000;
-            margin: 0;
-        }
-
-        p:nth-of-type(3n) {
-            margin-bottom: 15px;
-        }
-
-        .target {
-            color: hotpink;
-        }
-        
-        .disguise {
-            color: deeppink;
-        }
-        
-        .method {
-            color: tomato;
-        }
-
-        #wildcard {
-            color: red;
-        }
-        
-        body::after {
-          content: "";
-          background: url("https://vignette.wikia.nocookie.net/hitman/images/5/5f/ICA_Logo.png/revision/latest?cb=20161103185906");
-          background-size: 182%;
-          opacity: 0.03;
-          /*height: 1338px;
-          width: 1218px;*/
-          background-repeat: no-repeat;
-          background-attachment: fixed;
-          background-position: center;
-          top: 0;
-          left: 0;
-          bottom: 0;
-          right: 0;
-          /*margin-left: 282.5px;
-          margin-right: 282.5px;
-          margin-bottom: -150px;*/
-          position: absolute;
-          z-index: -100;
-        }
+      body {}
     </style>
-
 </head>
-
 <body>
-    <p id="mission"></p>
 
-    <div id="targets"></div>
+    <div class="container">
+        <div class="row my-4">
+          <div class="col-md-6">
+              <select id="myDropdown" class="form-control">
+                  <option value="" disabled selected hidden>Choose a mission..</option>
+              </select>
+          </div>
+          <div class="col-md-2">
+            <button id="randomizeMission" class="btn btn-primary">Random</button>
+          </div>
+        </div>
 
-    <p id="wildcard" class="invisible"></p>
+        <div class="row">
+            <div class="col-md-8">
+                <button id="showMissionDetails" class="btn btn-primary">Draw</button>
+                <p id="missionDetails" class="mt-3"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     
-    <button id="reroll-button" class="hidden" type="button">Reroll</button>
-  
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script>
-        var extras = [
-            "Can only incapacitate non-targets by punching them",
-            "Set off an explosion in a public area",
-            "Hide 5 corpses in one bathroom",
-            "Kill 4 people while wearing the same outfit as them",
-            "Cause an environmental accident on 3 people",
-            "Kill the first armed NPC you see",
-            "Kill anyone who talks to you",
-            "Wear the clown suit for the entire run (and start with a new bat)"
+        $(document).ready(function(){
+            $.each(missions, function(index, mission) {
+                $('#myDropdown').append($('<option>', { 
+                    value: mission.name,
+                    text : mission.name 
+                }));
+            });
+
+            var currentPart = 0;
+            var currentTargetIndex = 0;
+
+            $('#showMissionDetails').click(function() {
+                var selectedMissionName = $('#myDropdown').val();
+                if(selectedMissionName !== "") {
+                    var selectedMission = missions.find(m => m.name === selectedMissionName);
+
+                    if(currentTargetIndex < selectedMission.targets.length) {
+                        var target = selectedMission.targets[currentTargetIndex];
+                        var disguise = selectedMission.disguises[Math.floor(Math.random() * selectedMission.disguises.length)];
+                        var weapon = selectedMission.weapons[Math.floor(Math.random() * selectedMission.weapons.length)];
+
+                        var missionText = "";
+                        if(currentPart === 0) {
+                            missionText = `You must kill <strong>${target}</strong><br>`;
+                        } else if(currentPart === 1) {
+                            missionText = ` disguised as <strong>${disguise}</strong><br>`;
+                        } else if(currentPart === 2) {
+                            missionText = ` with <strong>${weapon}</strong>.<br><br>`;
+                        }
+                        $('#missionDetails').append(missionText);
+
+                        currentPart = (currentPart + 1) % 3;
+                        if(currentPart === 0) {
+                            currentTargetIndex++;
+                        }
+                    } else {
+                        var combinedWildcards = (selectedMission.wildcards || []).concat(wildcards);
+                        var randomWildcard = combinedWildcards[Math.floor(Math.random() * combinedWildcards.length)];
+                        $('#missionDetails').append("Wildcard: <strong>" + randomWildcard + "</strong><br><br>");
+
+                        currentTargetIndex = 0;
+                        currentPart = 0; // Reset for the next mission
+                    }
+                } else {
+                    $('#missionDetails').text("Please select a mission.");
+                }
+            });
+
+            $('#randomizeMission').click(function() {
+              var dropdown = $("#myDropdown"); // Replace 'yourDropdownId' with the actual ID of your dropdown
+              var options = dropdown.find("option");
+              
+              var randomIndex = Math.floor(Math.random() * options.length);
+              options.eq(randomIndex).prop("selected", true);
+            });
+        });
+
+        var wildcards = [
+            "Put 5 bodies in one bathroom",
+            "One save scum",
+            "Choose starting location",
+            "Choose starting loadout",
+            "Dragging bodies is not allowed",
+            "Trigger a lockdown before killing any targets",
+            "Immediately punch anyone who talks to you",
+            "Kill a third unique target"
         ];
-        var extrasReset = [];
-
-        var suitStarts = [
-            "Red Carpet",
-            "Palace Garden",
-            "Pile-Driver Barge",
-            "Attic",
-            "Undercover at IAGO Auction",
-            "Main Square",
-            "ICA Safe House",
-            "Harbor",
-            "Sapienza Ruins",
-            "Main Square Tower",
-            "Church Morgue",
-            "City gates",
-            "Promenade",
-            "Bazaar Entrance",
-            "Lamp Store Rooftop",
-            "School Alley",
-            "Consulate Parking Garage",
-            "Consulate plaza",
-            "Riverside Landing",
-            "47's Suite",
-            "West Bridge",
-            "Old Orchard",
-            "Southern Farm Perimeter",
-            "Water Tower",
-            "Infiltrating Along the Mountain Path",
-            "Riverside Landing",
-            "The Beach",
-            "Undercover gear near helipad",
-            "Event Entrance",
-            "Dolphin Fountain",
-            "Marina",
-            "Stands",
-            "Village Bus Stop",
-            "Village Hostel",
-            "Shaman's Hut",
-            "Village Bar",
-            "Main Street",
-            "Train",
-            "Boat",
-            "Skywalk",
-            "Taxi",
-            "Chawls",
-            "Whittleton Creek",
-            "Harbor",
-            "Chapel",
-            "Keep"
-        ];
-
-        var disguiseExits = ["Ambulance", "Trash Truck"];
-
-        var koExits = ["Merchant's Car", "Rico's Car", "Local's Car", "Roadwork Gate"];
-
-        var generic = {
-            kills: [
-                "Firearm",
-                "Melee Weapon (Small)",
-                "Melee Weapon (Large)",
-                "Accident",
-                "Explosion",
-                "Poison"
-            ],
-            firearms: [
-                "Pistol",
-                "Sniper Rifle",
-                "Explosive (Weapon)",
-                "Assault Rifle",
-                "SMG",
-                "Loud Shotgun"
-            ],
-            accidents: [
-                "Drowning",
-                "Falling Object",
-                "Fall",
-                "Fire",
-                "Electricity",
-                "Explosion (Accident)"
-            ]
-        };
-
-        var showstopper = {
-            missionTitle: "The Showstopper",
-            melee: [
-                "a Screwdriver",
-                "a Letter Opener",
-                "Scissors",
-                "a Kitchen Knife",
-                "Fiber Wire",
-                "a Fire Axe",
-                "a Battle Axe",
-                "a Saber",
-                "a Hatchet"
-            ],
-            targetList: ["Viktor Novikov", "Dalia Margolis"],
-            contractTargets: [
-                "Viktor Novikov",
-                "Dalia Margolis",
-                "Fashion designer Sebastian Sato",
-                "Model Helmut Kruger",
-                "FSB agent Max Decker",
-                "Sheik Salman Al-Ghazali",
-                "Reporter Liza McKenzie",
-                "Dalia's secretary Hailey Brennan",
-                "Viktor's bodyguard Kurt Donovan",
-                "Dalia's assistant Sophus Fatale"
-            ],
-            entry: [
-                "Red Carpet",
-                "Palace Garden",
-                "Pile-Driver Barge",
-                "Attic",
-                "Undercover in Kitchen",
-                "Undercover in Locker Room",
-                "Undercover at IAGO Auction",
-                "Undercover in AV Center",
-                "Undercover in Dressing Area"
-            ],
-            exit: ["Front Gates", "Kitchen", "Helicopter", "Speedboat"],
-            disguises: [
-                "47 in his Suit",
-                "Auction Staff",
-                "a Chef",
-                "a CICADA Bodyguard",
-                "Event Crew",
-                "Palace Staff",
-                "a Security Guard",
-                "a Stylist",
-                "Helmut Fucking Kruger",
-                "Sheikh Zanzibar",
-                "a Vampire Magician"
-            ],
-            extras: ["Set off an explosive in the catwalk room"]
-        };
-
-        var hh = {
-            missionTitle: "Holiday Hoarders",
-            melee: [
-                "a Screwdriver",
-                "a Letter Opener",
-                "Scissors",
-                "a Kitchen Knife",
-                "Fiber Wire",
-                "a Fire Axe",
-                "a Battle Axe",
-                "a Saber",
-                "a Hatchet",
-                "a Holiday Fireaxe",
-                "a Shuriken",
-                "the Circumcision Knife"
-            ],
-            targetList: ['Harry "Smokey" Bagnato', 'Marv "Slick" Gonif'],
-            contractTargets: ['Harry "Smokey" Bagnato', 'Marv "Slick" Gonif'],
-            entry: [
-                "Red Carpet",
-                "Palace Garden",
-                "Pile-Driver Barge",
-                "Attic",
-                "Undercover in Kitchen",
-                "Undercover in Locker Room",
-                "Undercover at IAGO Auction",
-                "Undercover in AV Center",
-                "Undercover in Dressing Area"
-            ],
-            exit: ["Front Gates", "Kitchen", "Helicopter", "Speedboat", "Chimney"],
-            disguises: [
-                "47 in his Suit",
-                "Auction Staff",
-                "a Chef",
-                "a CICADA Bodyguard",
-                "Event Crew",
-                "Palace Staff",
-                "a Security Guard",
-                "a Stylist",
-                "Helmut Fucking Kruger",
-                "Sheikh Zanzibar",
-                "a Vampire Magician"
-            ],
-            extras: ["Set off an explosive in the catwalk room"]
-        };
-
-        var wot = {
-            missionTitle: "World of Tomorrow",
-            melee: [
-                "a Battle Axe",
-                "an Old Axe",
-                "a Katana",
-                "a Fire Axe",
-                "a Saber",
-                "the Amputation Knife",
-                "the Circumcision Knife",
-                "a Combat Knife",
-                "a Hatchet",
-                "a Kitchen Knife",
-                "a Letter Opener",
-                "a Screwdriver",
-                "Fiber Wire"
-            ],
-            targetList: ["Silvio Caruso", "Francesca De Santis"],
-            contractTargets: [
-                "Silvio Caruso",
-                "Francesca De Santis",
-                "Butler Terenzio Endrizzi",
-                "Golf coach Roberto Vargas",
-                "Chef Marcello Ray",
-                "Green plumber Luigi Saltatore",
-                "Dr. Oscar Lafayette",
-                "Bohemian Torres Piombo",
-                "Private investigator Sal Falcone",
-                "Scientist with dongle Viana Buccho",
-                "Undertaker Fabio Pavione",
-                "Red plumber Mario Saltatore"
-            ],
-            entry: [
-                "Main Square",
-                "ICA Safe House",
-                "Harbor",
-                "Sapienza Ruins",
-                "Main Square Tower",
-                "Church Morgue",
-                "Undercover in Mansion Kitchen",
-                "Undercover in Field Lab",
-                "Undercover in Mansion Garden",
-                "Undercover as Security Staff"
-            ],
-            exit: ["Car", "Speedboat (Pier)", "Plane", "Speedboat (Ruins)"],
-            disguises: [
-                "47 in his Suit",
-                "Biolab Security",
-                "a Bodyguard",
-                "the Bohemian",
-                "a Butler",
-                "Church Staff",
-                "a Cyclist",
-                "a Delivery Man",
-                "Dr. Oscar Lafayette",
-                "a Gardener",
-                "the Green Plumber",
-                "a Hazmat Suit",
-                "a Housekeeper",
-                "a Kitchen Assistant",
-                "a Lab Technician",
-                "a Mansion Chef",
-                "Mansion Security",
-                "Mansion Staff",
-                "a Plague Doctor",
-                "a Priest",
-                "a Private Detective",
-                "the Red Plumber",
-                "Roberto Vargas",
-                "a Store Clerk",
-                "a Street Performer",
-                "a Waiter"
-            ],
-            extras: ["Put three bodies in the woodchipper", "Knock out 5 people with spaghetti sauce"]
-        };
-
-        var icon = {
-            missionTitle: "The Icon",
-            melee: [
-                "a Battle Axe",
-                "a Cleaver",
-                "a Fire Axe",
-                "a Knife",
-                "a Screwdriver",
-                "Fiber Wire"
-            ],
-            targetList: ["Dino Bosco"],
-            contractTargets: [
-                "Dino Bosco",
-                "Tech crew member near city gates Palmiro Russo",
-                "Merchandise salesman Enrico Nucci",
-                "Bosco's agent Sophia Wilde",
-                "Guard in the tower Giuseppe Monaldo",
-                "SFX crew member indoors Amaranto 'Tony' Mazzi"
-            ],
-            entry: ["City gates"],
-            exit: ["Town Gate", "Bosco's Car"],
-            disguises: [
-                "47 in his Suit",
-                "a Kitchen Assistant",
-                "Movie Crew",
-                "a Security Officer",
-                "SFX Crew"
-            ],
-            extras: []
-        };
-
-        var landslide = {
-            missionTitle: "Landslide",
-            melee: [
-                "Fiber Wire",
-                "a Screwdriver",
-                "Scissors",
-                "an Old Axe",
-                "a Kitchen Knife",
-                "a Saber",
-                "a Folding Knife",
-                "a Fire Axe",
-                "a Letter Opener",
-                "a Cleaver"
-            ],
-            targetList: ["Marco Abiatti"],
-            contractTargets: [
-                "Marco Abiatti",
-                "Photographer Marcello Folliero",
-                "Woman working at Abiatti's stand Alberta Arcuri",
-                "Padre Francesco",
-                "Red plumber Mario Fratelli",
-                "Green plumber Luigi Fratelli",
-                "Singer Cristina Dionisi",
-                "Abiatti's technician Roberto Mulo",
-                "Baker Dario Bronzo",
-                "Renzo 'Not Rocco' Forte",
-                "Lawyer Salvatore Bravuomo",
-                "Bohemian Silvestro Pugliesi"
-            ],
-            entry: ["Promenade"],
-            exit: ["Town Gate", "Speedboat", "Merchant's Car"],
-            disguises: [
-                "47 in his Suit",
-                "Stage Crew",
-                "Security",
-                "a Bodyguard",
-                "a Photographer",
-                "a Waiter",
-                "Church Staff",
-                "a Priest",
-                "a Gardener",
-                "the Green Plumber",
-                "the Red Plumber",
-                "a Kitchen Assistant",
-                "Salvatore Bravuomo",
-                "the Bohemian"
-            ],
-            extras: []
-        };
-
-        var agc = {
-            missionTitle: "A Gilded Cage",
-            melee: [
-                "a Battle Axe",
-                "a Fire Axe",
-                "a Saber",
-                "Scissors",
-                "a Screwdriver",
-                "a Kitchen Knife",
-                "a Cleaver",
-                "a Letter Opener",
-                "a Folding Knife",
-                "Fiber Wire"
-            ],
-            targetList: ["Claus Hugo Strandberg", "Reza Zaydan"],
-            contractTargets: [
-                "Claus Hugo Strandberg",
-                "Reza Zaydan",
-                "Printing crew member Ashraf Raghib Mustafa",
-                "Cameraman Jeff Baker",
-                "School headmaster Shahin Abdul-Barr Maalouf",
-                "Masseur Konny Engström",
-                "Elite soldier in the tunnel Jawwaad Reza",
-                "Consulate intern Hektor Lindberg",
-                "Fortune teller Zaki Diab",
-                "Protester Shuaib Aly",
-                "Woman on lamp store roof Hilda Berg"
-            ],
-            entry: [
-                "Bazaar Entrance",
-                "Undercover at the Snail Stand",
-                "Undercover on the West Bazaar Rooftop",
-                "Undercover in the Courtyard Club",
-                "Undercover in Zaydan's Compound",
-                "Lamp Store Rooftop",
-                "Undercover in the Consulate",
-                "School Alley",
-                "Consulate Parking Garage"
-            ],
-            exit: ["Bazaar Gates", "Armored Vehicle", "Car in the Garage"],
-            disguises: [
-                "47 in his Suit",
-                "a Bodyguard",
-                "a Cameraman",
-                "a Consulate Intern",
-                "a Consulate Janitor",
-                "Consulate Security",
-                "an Elite Soldier",
-                "a Food Vendor",
-                "a Fortune Teller",
-                "a Handyman",
-                "the Headmaster",
-                "Local Printing Crew",
-                "a Masseur",
-                "a Military Officer",
-                "a Soldier",
-                "a Prisoner",
-                "a Shopkeeper",
-                "a Waiter"
-            ],
-            extras: []
-        };
-
-        var ahbos = {
-            missionTitle: "A House Built on Sand",
-            melee: [
-                "a Battle Axe",
-                "a Cleaver",
-                "a Folding Knife",
-                "a Kitchen Knife",
-                "Scissors",
-                "a Screwdriver",
-                "Fiber Wire"
-            ],
-            targetList: ["Matthieu Mendola", "Kong Tuo-Kwang"],
-            contractTargets: [
-                "Matthieu Mendola",
-                "Kong Tuo-Kwang",
-                "Shopkeeper by the well Yousef Shitrit",
-                "Guitarist Jalal al Din Muti Said",
-                "Fortune teller Zaki Diab",
-                "Vomiting bodyguard Hussein Guirguis",
-                "Waiter at the meeting spot Ahmed Aziz",
-                "Bartender Jewel Bourgeois"
-            ],
-            entry: ["Consulate plaza"],
-            exit: ["Bazaar Gates", "Truck", "Door near the Well", "Door by the Street"],
-            disguises: [
-                "47 in his Suit",
-                "a Bodyguard",
-                "a Food Vendor",
-                "a Fortune Teller",
-                "a Handyman",
-                "a Soldier",
-                "a Shopkeeper",
-                "a Waiter"
-            ],
-            extras: []
-        };
-
-        var c27 = {
-            missionTitle: "Club 27",
-            melee: [
-                "a Kitchen Knife",
-                "a Screwdriver",
-                "a Fire Axe",
-                "a Cleaver",
-                "a Hatchet",
-                "a Letter Opener",
-                "a Katana",
-                "Fiber Wire",
-                "the Sapper's Axe"
-            ],
-            targetList: ["Jordan Cross", "Ken Morgan"],
-            contractTargets: [
-                "Jordan Cross",
-                "Ken Morgan",
-                "Cross' Manager Dexy Barat",
-                "Producer Max Liston",
-                "Guitarist Heidi Santoro",
-                "Guest residing in room 208 Toby Hicks",
-                "Former sitcom star Jackie Carrington",
-                "Drummer Abel De Silva",
-                "Hotel manager Mrs. Mookjai",
-                "Chef Tharn Srisai",
-                "Man passed out in Jackie's room Julian",
-                "Stalker Benjamin Bertam",
-                "Ken's bodyguard Otis Kaplan"
-            ],
-            entry: [
-                "Riverside Landing",
-                "47's Suite",
-                "Undercover in the Restaurant Kitchen",
-                "Undercover in the Linen Room",
-                "Undercover by the Security Shed",
-                "Undercover at the Himmapan Bar",
-                "Undercover in the Side Garden",
-                "Undercover in the 2nd Floor Hallway"
-            ],
-            exit: ["Boat", "Tuk-tuk", "Tunnel"],
-            disguises: [
-                "47 in his Suit",
-                "a Drummer",
-                "an Exterminator",
-                "a Groundskeeper",
-                "Hotel Security",
-                "Hotel Staff",
-                "Jordan Cross' Bodyguard",
-                "Kitchen Staff",
-                "Ken Morgan's Bodyguard",
-                "Recording Crew",
-                "a Stalker",
-                "a Waiter"
-            ],
-            extras: []
-        };
-
-        var ff = {
-            missionTitle: "Freedom Fighters",
-            melee: [
-                "a Cleaver", 
-                "an Old Axe", 
-                "a Kitchen Knife", 
-                "a Screwdriver", 
-                "Fiber Wire"
-            ],
-            targetList: ["Sean Rose", "Penelope Graves", "Ezra Berg", "Maya Parvati"],
-            contractTargets: [
-                "Sean Rose",
-                "Penelope Graves",
-                "Ezra Berg",
-                "Maya Parvati",
-                "Explosives specialist Quince Elliot",
-                "Militia cook Robert Powell",
-                "Point man Lloyd Burgess",
-                "Militia technician Milton Geiger",
-                "Sleeping militia soldier Mario Thompson",
-                "Militia spec ops in the barn Liam Butler",
-                "Drill instructor Albert Knarr"
-            ],
-            entry: [
-                "Undercover in the Garage",
-                "West Bridge",
-                "Undercover by the Greenhouse",
-                "Undercover on the Demolition Range",
-                "Old Orchard",
-                "Southern Farm Perimeter",
-                "Undercover in the Farmhouse",
-                "Water Tower"
-            ],
-            exit: ["Bridge", "Quad Bike", "River", "Front Gate", "Tornado Shelter"],
-            disguises: [
-                "47 in his Suit",
-                "an Explosives Specialist",
-                "a Hacker",
-                "a Militia Cook",
-                "a Militia Elite",
-                "Militia Spec Ops",
-                "a Militia Soldier",
-                "a Militia Technician",
-                "Point Man",
-                "Scarecrow"
-            ],
-            extras: ["Beat three people with a mannequin arm"]
-        };
-
-        var si = {
-            missionTitle: "Situs Inversus",
-            melee: [
-                "Fiber Wire",
-                "a Scalpel",
-                "Scissors",
-                "a Kitchen Knife",
-                "a Cleaver",
-                "a Katana",
-                "a Screwdriver",
-                "a Fire Axe"
-            ],
-            targetList: ["Yuki Yamazaki", "Erich Soders"],
-            contractTargets: [
-                "Yuki Yamazaki",
-                "Showering resort staff member Lowell Aucoin",
-                "Dancing master Toshimi 'Sandā no ashi' Kaneko",
-                "Stetson man Amos Dexter",
-                "The director Akira Nakamura",
-                "Facial surgery patient Jason Portman",
-                "Yoga instructor J. Brooke",
-                "Head surgeon Nicholas Laurent",
-                "Helicopter pilot Nails",
-                "Nurse in the operating room Kimiho Ookawa",
-                "The curator Katashi Ito",
-                "Smoking handyman Tomiyuki Fujihara"
-            ],
-            entry: [
-                "Tobias Rieper's Suite",
-                "Spa",
-                "Infiltrating Along the Mountain Path",
-                "Restaurant",
-                "Undercover in the Staff Quarters",
-                "Undercover in the Kitchen",
-                "Undercover in the Garden",
-                "Morgue",
-                "Undercover in the Operating Theater"
-            ],
-            exit: ["Helicopter", "Snowmobile", "Hiking Route", "Cable Car"],
-            sodersKills: [
-                "Throw the Heart into the Trash Can",
-                "Shoot the Heart",
-                "Electrocution",
-                "Pistol",
-                "Large Firearm",
-                "Explosion",
-                "Poison the Stem Cells",
-                "Fail the Surgery",
-                "Make the Surgeon Fail the Surgery",
-                "Robot Arms"
-            ],
-            disguises: [
-                "a Ninja",
-                "47 in his Suit",
-                "a Baseball Player",
-                "a Bodyguard",
-                "a Chef",
-                "the Chief Surgeon",
-                "a Doctor",
-                "a Handyman",
-                "a Helicopter Pilot",
-                "the Hospital Director",
-                "a Morgue Doctor",
-                "a Motorcyclist",
-                "a Patient",
-                "Resort Security",
-                "Resort Staff",
-                "a Surgeon",
-                "VIP Patient (Dexter)",
-                "VIP Patient (Portman)",
-                "a Yoga Instructor"
-            ],
-            extras: []
-        };
-
-        var ts = {
-            missionTitle: "The Source",
-            melee: [
-                "a Kitchen Knife",
-                "a Screwdriver",
-                "a Fire Axe",
-                "a Cleaver",
-                "a Hatchet",
-                "a Letter Opener",
-                "a Katana",
-                "Fiber Wire",
-                "the Sapper's Axe"
-            ],
-            targetList: ["Oybek Nabazov", "Sister Yulduz"],
-            contractTargets: [
-                "Oybek Nabazov",
-                "Sister Yulduz",
-                "Waiter outside the exhibition Robert Egg",
-                "Cult bodyguard Akram",
-                "Defecting cultist Jeff",
-                "Manipulative cultist Rebecca",
-                "Man with a beige hat in the exhibition Charles Slaughter",
-                "Former sitcom star Jackie Carrington",
-                "Man passed out in Jackie's room Julian",
-                "Man with a yellow jumper tied around his waist Sam Harrison",
-                "Female Hotel Staff in the globe room Vipada Ahunai",
-                "Cultist in the top floor Robert Uppey Jr",
-                "Security Guard on the pier A-Wut"
-            ],
-            entry: ["Hotel Front Terrace"],
-            exit: ["Boat", "Tunnel"],
-            disguises: [
-                "47 in his Suit",
-                "an Exterminator",
-                "a Groundskeeper",
-                "Hotel Security",
-                "Hotel Staff",
-                "a Cult Bodyguard",
-                "Kitchen Staff",
-                "a Waiter",
-                "a Cult Member"
-            ],
-            extras: []
-        };
-
-        var ta = {
-            missionTitle: "The Author",
-            melee: [
-                "a Battle Axe",
-                "a Cleaver",
-                "a Fire Axe",
-                "a Knife",
-                "a Screwdriver",
-                "Fiber Wire"
-            ],
-            targetList: ["Craig Black", "Brother Akram"],
-            contractTargets: ["Craig Black", "Brother Akram"],
-            entry: ["Portico"],
-            exit: ["Town Gate"],
-            disguises: [
-                "47 in his Suit",
-                "a Waiter",
-                "Craig Black",
-                "Brother Akram",
-                "The Superfan",
-                "a Bodyguard"
-            ],
-            extras: []
-        };
-
-        var pz = {
-            missionTitle: "Patient Zero",
-            melee: [
-                "Fiber Wire",
-                "a Scalpel",
-                "Scissors",
-                "a Kitchen Knife",
-                "a Cleaver",
-                "a Katana",
-                "a Screwdriver",
-                "a Fire Axe"
-            ],
-            targetList: ["Owen Cage", "Klaus Liebleid"],
-            contractTargets: ["Owen Cage", "Klaus Liebleid"],
-            entry: ["Infiltrating below the helipad"],
-            exit: ["Snowmobile", "Hiking Route", "Cable Car"],
-            disguises: [
-                "47 in his Suit",
-                "a Bodyguard",
-                "a Chef",
-                "a Bio Suit",
-                "a Handyman",
-                "a Helicopter Pilot",
-                "the Hospital Director",
-                "a Morgue Doctor",
-                "a VIP Patient",
-                "a Patient",
-                "Resort Security",
-                "Resort Staff",
-                "a Surgeon",
-                "VIP Patient (Dexter)",
-                "a Yoga Instructor"
-            ],
-            extras: []
-        };
-
-        var tfl = {
-            missionTitle: "The Finish Line",
-            melee: [
-                "Fiber Wire",
-                "the Amputation Knife",
-                "a Battleaxe",
-                "a Cleaver",
-                "a Kitchen Knife",
-                "Scissors",
-                "a Screwdriver",
-                "a Starfish",
-                "a Fire Axe",
-                "an Old Axe"
-            ],
-            targetList: ["Robert Knox", "Sierra Knox"],
-            contractTargets: ["Robert Knox", "Sierra Knox"],
-            entry: [
-                "Event Entrance",
-                "Dolphin Fountain",
-                "Marina",
-                "Stands",
-                "Food Stand",
-                "Overpass",
-                "Driver's Lounge",
-                "Podium",
-                "Medical Area",
-                "Kronstadt Bayside Center",
-                "Kowoon Pit"
-            ],
-            exit: ["Helicopter", "Main Gate", "Sewer", "Speedboat", "Ambulance"],
-            disguises: [
-                "47 in his Suit",
-                "an Aeon Driver",
-                "an Aeon Mechanic",
-                "Event Crew",
-                "Event Security",
-                "Florida Man",
-                "a Food Vendor",
-                "a Journalist",
-                "Kitchen Staff",
-                "a Kowoon Driver",
-                "a Kowoon Mechanic",
-                "a Kronstadt Engineer",
-                "a Kronstadt Researcher",
-                "Kronstadt Security",
-                "a Mascot",
-                "a Medic",
-                "Moses Lee",
-                "Pale Rider",
-                "a Photographer",
-                "a Race Coordinator",
-                "a Race Marshall",
-                "Sheik Zanzibar",
-                "a Sotteraneo Mechanic",
-                "a Street Musician",
-                "Ted Mendez",
-                "a Thwack Driver",
-                "a Waiter",
-                "a Blue Seed Driver",
-                "a Kronstadt Driver",
-                "a Kronstadt Mechanic"
-            ],
-            extras: []
-        };
-
-        var ths = {
-            missionTitle: "Three-headed Serpent",
-            melee: [
-                "Fiber Wire",
-                "a Screwdriver",
-                "a Kitchen Knife",
-                "a Cleaver",
-                "Scissors",
-                "a Barber Razor",
-                "a Letter Opener",
-                "a Machete"
-            ],
-            targetList: ["Rico Delgado", "Andrea Martinez", "Jorge Franco"],
-            contractTargets: ["Rico Delgado", "Andrea Martinez", "Jorge Franco"],
-            entry: [
-                "Village Bus Stop",
-                "Village Hostel",
-                "Shaman's Hut",
-                "Village Bar",
-                "Construction Site",
-                "Coca Fields",
-                "Submarine Cave",
-                "Mansions Basement"
-            ],
-            exit: [
-                "Rico's Car",
-                "Helicopter",
-                "Speedboat",
-                "Local's Car",
-                "Scooter",
-                "Bus"
-            ],
-            disguises: [
-                "47 in his Suit",
-                "a Drummer",
-                "a Hippo Whisperer",
-                "a Shaman",
-                "Submarine Crew",
-                "a Submarine Engineer",
-                "a Tattoo Artist",
-                "a Coca Field Worker",
-                "a Construction Worker",
-                "Mansion Staff",
-                "a Mansion Guard",
-                "a Coca Field Guard",
-                "an Elite Guard",
-                "a Street Soldier",
-                "a Hippie",
-                "the Barman",
-                "a Gardener",
-                "a Chef",
-                "a Drug Lab Worker"
-            ],
-            extras: []
-        };
-
-        var cag = {
-            missionTitle: "Chasing a Ghost",
-            melee: [
-                "Fiber Wire",
-                "a Beak Axe",
-                "an Old Axe",
-                "Scissors",
-                "a Measuring Tape",
-                "the Amputation Knife",
-                "a Screwdriver",
-                "a Barber Razor",
-                "a Cleaver",
-                "a Folding Knife",
-                "a Letter Opener",
-                "a Kitchen Knife",
-                "a Saber",
-                "a Fire Axe"
-            ],
-            targetList: ["The Maelstrom", "Dawood Rangan", "Vanya Shah"],
-            contractTargets: ["The Maelstrom", "Dawood Rangan", "Vanya Shah"],
-            entry: [
-                "Main Street",
-                "Train",
-                "Boat",
-                "Skywalk",
-                "Taxi",
-                "Chawls",
-                "Laundry",
-                "Barge",
-                "Slums",
-                "Metal Forge",
-                "Photo Shoot",
-                "Hill",
-                "Train Yard"
-            ],
-            exit: ["Boat", "Street", "Taxi", "Train", "Crows' Hideout"],
-            disguises: [
-                "47 in his Suit",
-                "Local Security",
-                "a Food Vendor",
-                "a Thug",
-                "an Elite Thug",
-                "a Metal Worker",
-                "a Tailor",
-                "a Queen's Guard",
-                "Vanya's Servant",
-                "a Queen's Bodyguard",
-                "a Laundry Worker",
-                "a Laundry Foreman",
-                "a Dancer",
-                "a Holy Man",
-                "a Lead Actor",
-                "the Kashmirian",
-                "a Barber",
-                "Bollywood Crew",
-                "a Bollywood Bodyguard",
-                "a Painter"
-            ],
-            extras: []
-        };
-
-        var al = {
-            missionTitle: "Another Life",
-            melee: [
-                "Fiber Wire",
-                "an Old Axe",
-                "a Kitchen Knife",
-                "a Screwdriver",
-                "Scissors",
-                "a Letter Opener",
-                "a Fire Axe",
-                "a Hatchet"
-            ],
-            targetList: ["Janus", "Nolan Cassidy"],
-            contractTargets: ["Janus", "Nolan Cassidy"],
-            entry: [
-                "Whittleton Creek",
-                "Construction Area",
-                "Fumigation",
-                "Garbage Removal",
-                "Suburb Sign",
-                "BBQ Party"
-            ],
-            exit: [
-                "Bus",
-                "Raft",
-                "Sewer",
-                "Construction Van",
-                "Trash Truck",
-                "Roadwork Gate"
-            ],
-            disguises: [
-                "47 in his Suit",
-                "an Exterminator",
-                "a Politician",
-                "a Real Estate Broker",
-                "a Nurse",
-                "Arkian Robe",
-                "Janus' Bodyguard",
-                "Cassidy Bodyguard",
-                "a Police Deputy",
-                "Construction Crew",
-                "a Politician's Assistant",
-                "a Server",
-                "a Garbage Man",
-                "Spencer 'The Hammer' Green",
-                "the BBQ Owner",
-                "a Mailman",
-                "Gunther Mueller",
-                "a Gardener",
-                "James Batty",
-                "a Plumber",
-                "Sheriff Masterson"
-            ],
-            extras: []
-        };
-
-        var tas = {
-            missionTitle: "The Ark Society",
-            melee: [
-                "Fiber Wire",
-                "a Battleaxe",
-                "a Broadsword",
-                "a Saber",
-                "an Old Axe",
-                "a Katana",
-                "a Burial Dagger",
-                "the Circumcision Knife",
-                "a Screwdriver",
-                "a Sapper's Axe",
-                "a Cleaver",
-                "a Scalpel",
-                "a Hatchet",
-                "a Viking Axe",
-                "an Aztec Necklace",
-                "Scissors"
-            ],
-            targetList: ["Zoe Washington", "Sophia Washington"],
-            contractTargets: ["Zoe Washington", "Sophia Washington"],
-            entry: [
-                "Harbor",
-                "Chapel",
-                "Keep",
-                "Reception Area",
-                "Kitchens",
-                "Warehouse",
-                "Gallery",
-                "Architects' Lounge"
-            ],
-            exit: ["Rooftop", "Helicopter", "Boat", "Warehouse", "Castle Wall"],
-            disguises: [
-                "47 in his Suit",
-                "an Initiate",
-                "an Ark Member",
-                "an Architect",
-                "Jebediah Block",
-                "Burial Robes",
-                "a Knight",
-                "Event Staff",
-                "a Chef",
-                "a Custodian",
-                "a Raider",
-                "an Elite Guard",
-                "a Musician",
-                "Blake Nathaniel",
-                "an Entertainer",
-                "a Butler",
-                "Castle Staff",
-                "the Master of Ceremonies"
-            ],
-            extras: []
-        };
 
         var missions = [
-            showstopper,
-            hh,
-            wot,
-            icon,
-            landslide,
-            agc,
-            ahbos,
-            c27,
-            ff,
-            si,
-            ts,
-            ta,
-            pz,
-            tfl,
-            ths,
-            cag,
-            al,
-            tas
+            {
+                "name": "ICA Facility - Freeform Training",
+                "targets": ["Kalvin Ritter"],
+                "disguises": ["Tactical Turtleneck", "Bodyguard", "Mechanic", "Terry Norfolk", "Yacht Crew", "Yacht Security"],
+                "weapons": ["Pistol", "Assault Rifle", "Shotgun", "Fiber Wire", "Explosive"],
+                "wildcards": []
+            },
+            {
+                "name": "ICA Facility - The Final Test",
+                "targets": ["Jasper Knight"],
+                "disguises": ["Tactical Turtleneck", "Airplane Mechanic", "Airfield Security", "KGB Officer", "Soviet Soldier"],
+                "weapons": ["Pistol", "Assault Rifle", "Fiber Wire"],
+                "wildcards": []
+            },
+            {
+                "name": "Paris - The Showstopper",
+                "targets": ["Viktor Novikov", "Dalia Margolis"],
+                "disguises": ["Tuxedo", "Auction Staff", "Chef", "CICADA Bodyguard", "Helmut Kruger", "Palace Staff", "Security Guard", "Sheikh", "Stylist", "Tech Crew", "Vampire Magician"],
+                "weapons": ["Pistol", "Assault Rifle", "Shotgun", "Battle Axe", "Cleaver", "Fire Axe", "Fire Poker", "Hatchet", "Kitchen Knife", "Letter Opener", "Saber", "Scissors", "Screwdriver", "Explosive"],
+                "wildcards": ["Set off an explosion on the catwalk", "Dump 3 people in the river"]
+            },
+            {
+                "name": "Paris - Holiday Hoarders",
+                "targets": ["Harry \"Smokey\" Bagnato", "Marv \"Slick\" Gonif"],
+                "disguises": ["Tuxedo", "Auction Staff", "Chef", "CICADA Bodyguard", "Helmut Kruger", "Palace Staff", "Santa 47", "Security Guard", "Sheikh", "Stylist", "Tech Crew", "Vampire Magician"],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Sniper Rifle",
+                  "Battle Axe",
+                  "Circumcision Knife",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Hatchet",
+                  "Holiday Fire Axe",
+                  "Holiday Fire Poker",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Shuriken",
+                  "Xmas Star",
+                  "Explosive",
+                  "Poison"
+                ],
+                "wildcards": ["Set off an explosion on the catwalk", "Dump 3 people in the river", "You must escape through a chimney as Santa 47"]
+            },
+            {
+                "name": "Sapienza - World of Tomorrow",
+                "targets": ["Silvio Caruso", "Francesca De Santis"],
+                "disguises": [
+                  "Italian Suit",
+                  "Biolab Security",
+                  "Bodyguard",
+                  "Bohemian",
+                  "Butler",
+                  "Church Staff",
+                  "Cyclist",
+                  "Delivery Man",
+                  "Dr. Oscar Lafayette",
+                  "Gardener",
+                  "Green Plumber",
+                  "Hazmat Suit",
+                  "Housekeeper",
+                  "Kitchen Assistant",
+                  "Lab Technician",
+                  "Mansion Chef",
+                  "Mansion Security",
+                  "Mansion Staff",
+                  "Plague Doctor",
+                  "Priest",
+                  "Private Detective",
+                  "Red Plumber",
+                  "Roberto Vargas",
+                  "Store Clerk",
+                  "Street Performer",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Amputation Knife",
+                  "Battle Axe",
+                  "Circumcision Knife",
+                  "Cleaver",
+                  "Combat Knife",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Folding Knife",
+                  "Hatchet",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Old Axe",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Explosive",
+                ],
+                "wildcards": ["Put 3 bodies in the woodchipper", "Dump 3 bodies in the acid", "Dump 3 bodies in the grave", "Kill everyone in the virus chamber"]
+            },
+            {
+                "name": "Sapienza - The Icon",
+                "targets": ["Dino Bosco"],
+                "disguises": [
+                  "Italian Suit",
+                  "Kitchen Assistant",
+                  "Movie Crew",
+                  "Security",
+                  "SFX Crew",
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Battle Axe",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Kitchen Knife",
+                  "Screwdriver",
+                  "Explosive"
+                ],
+                "wildcards": ["Detonate an explosive in his trailer"]
+            },
+            {
+                "name": "Sapienza - Landslide",
+                "targets": ["Marco Abiatti"],
+                "disguises": [
+                  "Italian Suit",
+                  "Bodyguard",
+                  "Bohemian",
+                  "Church Staff",
+                  "Gardener",
+                  "Green Plumber",
+                  "Kitchen Assistant",
+                  "Photographer",
+                  "Priest",
+                  "Red Plumber",
+                  "Salvatore Bravuomo",
+                  "Security",
+                  "Stage Crew",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Old Axe",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Explosive",
+                ],
+                "wildcards": ["Put 3 bodies in the woodchipper", "Dump 3 bodies in the grave"]
+            },
+            {
+                "name": "Sapienza - The Author",
+                "targets": ["Craig Black", "Brother Akram"],
+                "disguises": [
+                  "Italian Suit",
+                  "Bodyguard",
+                  "Bohemian",
+                  "Brother Akram",
+                  "Craig Black",
+                  "Church Staff",
+                  "Gardener",
+                  "Green Plumber",
+                  "Housekeeper",
+                  "Kitchen Assistant",
+                  "Mansion Chef",
+                  "Red Plumber",
+                  "Salvatore Bravuomo",
+                  "SFX Crew",
+                  "Super Fan",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Fire Axe",
+                  "Kitchen Knife",
+                  "Scissors",
+                  "Screwdriver",
+                  "Explosive"
+                ],
+                "wildcards": ["Dump 3 bodies in the grave"]
+            },
+            {
+                "name": "Marrakesh - A Gilded Cage",
+                "targets": ["Reza Zaydan", "Claus Hugo Strandberg"],
+                "disguises": [
+                  "Summer Suit",
+                  "Bodyguard",
+                  "Cameraman",
+                  "Consulate Intern",
+                  "Consulate Janitor",
+                  "Consulate Security",
+                  "Elite Soldier",
+                  "Food Vendor",
+                  "Fortune Teller",
+                  "Handyman",
+                  "Headmaster",
+                  "Local Printing Crew",
+                  "Masseur",
+                  "Military Officer",
+                  "Military Soldier",
+                  "Prisoner",
+                  "Shopkeeper",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Battle Axe",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Explosive",
+                  "Poison"
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Marrakesh - A House Built on Sand",
+                "targets": ["Kong Tuo-Kwang", "Matthieu Mendola"],
+                "disguises": [
+                  "Summer Suit",
+                  "Bodyguard",
+                  "Food Vendor",
+                  "Fortune Teller",
+                  "Handyman",
+                  "Military Soldier",
+                  "Shopkeeper",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Battle Axe",
+                  "Cleaver",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Bangkok - Club 27",
+                "targets": ["Jordan Cross", "Ken Morgan"],
+                "disguises": [
+                  "Casual Suit",
+                  "Abel de Silva",
+                  "Exterminator",
+                  "Groundskeeper",
+                  "Hotel Security",
+                  "Hotel Staff",
+                  "Jordan Cross' Bodyguard",
+                  "Kitchen Staff",
+                  "Morgan's Bodyguard",
+                  "Recording Crew",
+                  "Stalker",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Hatchet",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Sapper's Axe",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 5 bodies in the recording booth"]
+            },
+            {
+                "name": "Bangkok - The Source",
+                "targets": ["Oybek Nabazov", "Sister Yulduz"],
+                "disguises": [
+                  "Casual Suit",
+                  "Cult Bodyguard",
+                  "Cult Initiate",
+                  "Exterminator",
+                  "Groundskeeper",
+                  "Hotel Security",
+                  "Hotel Staff",
+                  "Jordan Cross' Bodyguard",
+                  "Kitchen Staff",
+                  "Militia Soldier",
+                  "Recording Crew",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Amputation Knife",
+                  "Circumcision Knife",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Hatchet",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Sapper's Axe",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 5 bodies in the recording booth"]
+            },
+            {
+                "name": "Colorado - Freedom Fighters",
+                "targets": ["Sean Rose", "Penelope Graves", "Ezra Berg", "Maya Parvati"],
+                "disguises": [
+                  "Tactical Gear",
+                  "Explosives Specialist",
+                  "Hacker",
+                  "Militia Cook",
+                  "Militia Elite",
+                  "Militia Soldier",
+                  "Militia Spec Ops",
+                  "Militia Technician",
+                  "Point Man",
+                  "Scarecrow"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Cleaver",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Old Axe",
+                  "Screwdriver",
+                  "Poison",
+                  "Nitroglycerin",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 3 bodies in the hay baler"]
+            },
+            {
+                "name": "Hokkaido - Situs Inversus",
+                "targets": ["Erich Soders", "Yuki Yamazaki"],
+                "disguises": [
+                  "Baseball Player",
+                  "Bodyguard",
+                  "Chef",
+                  "Chief Surgeon",
+                  "Doctor",
+                  "Handyman",
+                  "Helicopter Pilot",
+                  "Hospital Director",
+                  "Morgue Doctor",
+                  "Motorcyclist",
+                  "Ninja",
+                  "Patient",
+                  "Resort Security",
+                  "Resort Staff",
+                  "Surgeon",
+                  "VIP Patient (Dexter)",
+                  "VIP Patient (Portman)",
+                  "Yoga Instructor"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Scalpel",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 5 bodies in the sauna"]
+            },
+            {
+                "name": "Hokkaido - Patient Zero",
+                "targets": ["Owen Cage", "Klaus Liebleid"],
+                "disguises": [
+                  "Recon Gear (Starting suit)",
+                  "Bio Suit",
+                  "Bodyguard",
+                  "Chef",
+                  "Chief Surgeon",
+                  "Doctor",
+                  "Handyman",
+                  "Head Researcher",
+                  "Helicopter Pilot",
+                  "Hospital Director",
+                  "Morgue Doctor",
+                  "Motorcyclist",
+                  "Patient",
+                  "Resort Security",
+                  "Resort Staff",
+                  "Surgeon",
+                  "VIP Patient",
+                  "VIP Patient (Dexter)",
+                  "Yoga Instructor"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Scalpel",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 5 bodies in the sauna"]
+            },
+            {
+                "name": "Hokkaido - Hokkaido Snow Festival",
+                "targets": ["Dmitri Fedorov"],
+                "disguises": [
+                  "Baseball Player",
+                  "Bodyguard",
+                  "Chef",
+                  "Chief Surgeon",
+                  "Doctor",
+                  "Handyman",
+                  "Helicopter Pilot",
+                  "Hospital Director",
+                  "Morgue Doctor",
+                  "Motorcyclist",
+                  "Ninja",
+                  "Patient",
+                  "Resort Security",
+                  "Resort Staff",
+                  "Surgeon",
+                  "VIP Patient (Dexter)",
+                  "VIP Patient (Portman)",
+                  "Yoga Instructor"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Icicle",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Scalpel",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Put 5 bodies in the sauna"]
+            },
+            {
+                "name": "Miami - The Finish Line",
+                "targets": ["Sierra Knox", "Robert Knox"],
+                "disguises": [
+                  "Florida Fit (Starting suit)",
+                  "Aeon Driver",
+                  "Aeon Mechanic",
+                  "Blue Seed Driver",
+                  "Crashed Driver Kronstadt",
+                  "Event Security",
+                  "Event Crew",
+                  "Florida Man",
+                  "Food Vendor",
+                  "Journalist",
+                  "Kitchen Staff",
+                  "Kowoon Driver",
+                  "Kowoon Mechanic",
+                  "Kronstadt Engineer",
+                  "Kronstadt Mechanic",
+                  "Kronstadt Researcher",
+                  "Kronstadt Security",
+                  "Mascot",
+                  "Medic",
+                  "Moses Lee",
+                  "Pale Rider",
+                  "Race Coordinator",
+                  "Race Marshal",
+                  "Sheik",
+                  "Sotteraneo Mechanic",
+                  "Street Musician",
+                  "Ted Mendez",
+                  "Thwack Driver",
+                  "Thwack Mechanic"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Amputation Knife",
+                  "Battle Axe",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Kitchen Knife",
+                  "Old Axe",
+                  "Scissors",
+                  "Screwdriver",
+                  "Starfish",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Miami - A Silver Tongue",
+                "targets": ["Ajit \"AJ\" Krish"],
+                "disguises": [
+                  "Florida Fit",
+                  "Aeon Driver",
+                  "Aeon Mechanic",
+                  "Blue Seed Driver",
+                  "Crashed Driver Kronstadt",
+                  "Event Security",
+                  "Event Crew",
+                  "Florida Man",
+                  "Food Vendor",
+                  "Journalist",
+                  "Kitchen Staff",
+                  "Kowoon Driver",
+                  "Kowoon Mechanic",
+                  "Kronstadt Engineer",
+                  "Kronstadt Mechanic",
+                  "Kronstadt Researcher",
+                  "Kronstadt Security",
+                  "Mascot",
+                  "Medic",
+                  "Moses Lee",
+                  "Pale Rider",
+                  "Race Coordinator",
+                  "Race Marshal",
+                  "Sheik",
+                  "Sotteraneo Mechanic",
+                  "Street Musician",
+                  "Ted Mendez",
+                  "Thwack Driver",
+                  "Thwack Mechanic"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Amputation Knife",
+                  "Battle Axe",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Kitchen Knife",
+                  "Old Axe",
+                  "Scissors",
+                  "Screwdriver",
+                  "Starfish",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Santa Fortuna - Three-Headed Serpent",
+                "targets": ["Rico Delgado", "Jorge Franco", "Andrea Martínez"],
+                "disguises": [
+                  "Casual Tourist",
+                  "Barman",
+                  "Chef",
+                  "Coca Field Guard",
+                  "Coca Field Worker",
+                  "Construction Worker",
+                  "Drug Lab Worker",
+                  "Drummer",
+                  "Elite Guard",
+                  "Gardener",
+                  "Hippie",
+                  "Hippo Whisperer",
+                  "Mansion Guard",
+                  "Mansion Staff",
+                  "Shaman",
+                  "Street Soldier",
+                  "Submarine Crew",
+                  "Submarine Engineer",
+                  "Tattooist"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "\"El Matador\"",
+                  "Barber Razor",
+                  "Cleaver",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Machete",
+                  "Nne Obara's Machete",
+                  "Sacrificial Knife",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Feed 3 bodies to the piranhas"]
+            },
+            {
+                "name": "Santa Fortuna - Embrace Of The Serpent",
+                "targets": ["Blair Reddington"],
+                "disguises": [
+                  "Casual Tourist",
+                  "Barman",
+                  "Chef",
+                  "Coca Field Guard",
+                  "Coca Field Worker",
+                  "Construction Worker",
+                  "Drug Lab Worker",
+                  "Drummer",
+                  "Elite Guard",
+                  "Gardener",
+                  "Hippie",
+                  "Hippo Whisperer",
+                  "Mansion Guard",
+                  "Mansion Staff",
+                  "Shaman",
+                  "Street Soldier",
+                  "Submarine Crew",
+                  "Submarine Engineer",
+                  "Tattooist"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "\"El Matador\"",
+                  "Barber Razor",
+                  "Cleaver",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Machete",
+                  "Nne Obara's Machete",
+                  "Sacrificial Knife",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Feed 3 bodies to the piranhas"]
+            },
+            {
+                "name": "Mumbai - Chasing a Ghost",
+                "targets": ["Vanya Shah", "Dawood Rangan", "Wazir Kale"],
+                "disguises": [
+                  "Barber",
+                  "Bollywood Bodyguard",
+                  "Bollywood Crew",
+                  "Dancer",
+                  "Elite Thug",
+                  "Food Vendor",
+                  "Holy Man",
+                  "Kashmirian",
+                  "Laundry Foreman",
+                  "Laundry Worker",
+                  "Lead Actor",
+                  "Local Security",
+                  "Metal Worker",
+                  "Painter",
+                  "Queen's Bodyguard",
+                  "Queen's Guard",
+                  "Tailor",
+                  "Thug",
+                  "Vanya's Servant"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "Amputation Knife",
+                  "Barber Razor",
+                  "Beak Staff",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Measuring Tape",
+                  "Old Axe",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Mumbai - Illusions Of Grandeur",
+                "targets": ["Basil Carnaby"],
+                "disguises": [
+                  "Barber",
+                  "Bollywood Bodyguard",
+                  "Dancer",
+                  "Elite Thug",
+                  "Food Vendor",
+                  "Holy Man",
+                  "Kashmirian",
+                  "Laundry Foreman",
+                  "Laundry Worker",
+                  "Lead Actor",
+                  "Local Security",
+                  "Metal Worker",
+                  "Painter",
+                  "Queen's Bodyguard",
+                  "Queen's Guard",
+                  "Tailor",
+                  "Thug",
+                  "Vanya's Servant"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "Amputation Knife",
+                  "Barber Razor",
+                  "Beak Staff",
+                  "Cleaver",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Measuring Tape",
+                  "Old Axe",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Whittleton Creek - Another Life",
+                "targets": ["Janus", "Nolan Cassidy"],
+                "disguises": [
+                  "Suburban Suit",
+                  "Arkian Robe",
+                  "BBQ Owner",
+                  "Cassidy Bodyguard",
+                  "Construction Worker",
+                  "Exterminator",
+                  "Garbage Man",
+                  "Gardener",
+                  "Gunther Mueller",
+                  "James Batty",
+                  "Janus' Bodyguard",
+                  "Mailman",
+                  "Nurse",
+                  "Plumber",
+                  "Police Deputy",
+                  "Politician",
+                  "Politician's Assistant",
+                  "Real Estate Broker",
+                  "Server",
+                  "Sheriff Masterson",
+                  "Spencer \"The Hammer\" Green",
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "\"Rude Ruby\"",
+                  "Battle Axe",
+                  "Beak Staff",
+                  "Fire Axe",
+                  "Hatchet",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Dump 3 bodies in the sewer", "Knock out everyone at the muffin stand with a muffin"]
+            },
+            {
+                "name": "Whittleton Creek - A Bitter Pill",
+                "targets": ["Galen Vholes"],
+                "disguises": [
+                  "Suburban Suit",
+                  "Arkian Robe",
+                  "BBQ Owner",
+                  "Cassidy Bodyguard",
+                  "Construction Worker",
+                  "Exterminator",
+                  "Garbage Man",
+                  "Gardener",
+                  "Gunther Mueller",
+                  "James Batty",
+                  "Janus' Bodyguard",
+                  "Mailman",
+                  "Nurse",
+                  "Police Deputy",
+                  "Politician",
+                  "Politician's Assistant",
+                  "Server",
+                  "Sheriff Masterson",
+                  "Spencer \"The Hammer\" Green",
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "\"Rude Ruby\"",
+                  "Beak Staff",
+                  "Fire Axe",
+                  "Hatchet",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Scissors",
+                  "Screwdriver",
+                  "Poison",
+                  "Explosive"
+                ],
+                "wildcards": ["Dump 3 bodies in the sewer"]
+            },
+            {
+                "name": "Isle of Sgàil - The Ark Society",
+                "targets": ["Zoe Washington", "Sophia Washington"],
+                "disguises": [
+                  "Tuxedo and Mask (Starting suit)",
+                  "Architect",
+                  "Ark Member",
+                  "Blake Nathaniel",
+                  "Burial Robes",
+                  "Butler",
+                  "Castle Staff",
+                  "Chef",
+                  "Custodian",
+                  "Elite Guard",
+                  "Entertainer",
+                  "Event Staff",
+                  "Guard",
+                  "Initiate",
+                  "Jebediah Block",
+                  "Knight's Armor",
+                  "Master of Ceremonies",
+                  "Raider"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "SMG",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Aztec Necklace",
+                  "Battle Axe",
+                  "Broadsword",
+                  "Burial Dagger",
+                  "Circumcision Knife",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Hatchet",
+                  "Katana",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Old Axe",
+                  "Saber",
+                  "Sacrificial Knife",
+                  "Sapper's Axe",
+                  "Scalpel",
+                  "Scissors",
+                  "Screwdriver",
+                  "Starfish",
+                  "Viking Axe",
+                  "Poison",
+                ],
+                "wildcards": ["Dump 3 bodies in the ocean"]
+            },
+            {
+                "name": "New York - Golden Handshake",
+                "targets": ["Athena Savalas"],
+                "disguises": [
+                  "The New Yorker (starting suit)",
+                  "Bank Robber",
+                  "Bank Teller",
+                  "Fired Banker",
+                  "High Security Guard",
+                  "Investment Banker",
+                  "IT Worker",
+                  "Janitor",
+                  "Job Applicant",
+                  "Security Guard"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "SMG",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Antique Curved Knife",
+                  "Burial Dagger",
+                  "Earphones",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Hobby Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Scissors",
+                  "Screwdriver",
+                  "Tanto",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Haven Island - The Last Resort",
+                "targets": ["Tyson Williams", "Steven Bradley", "Ljudmila Vetrova"],
+                "disguises": [
+                  "The Tropical Islander (starting suit)",
+                  "Boat Captain",
+                  "Bodyguard",
+                  "Butler",
+                  "Chef",
+                  "Doctor",
+                  "Gas Suit",
+                  "Life Guard",
+                  "Masseur",
+                  "Personal Trainer",
+                  "Resort Guard",
+                  "Resort Staff",
+                  "Snorkel Instructor",
+                  "Swimwear",
+                  "Tech Crew",
+                  "Villa Guard",
+                  "Villa Staff",
+                  "Waiter"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Barber Razor",
+                  "Cleaver",
+                  "Earphones",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Hatchet",
+                  "Jarl's Pirate Saber",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Machete",
+                  "Scalpel",
+                  "Scissors",
+                  "Screwdriver",
+                  "Seashell",
+                  "Starfish",
+                  "Stethoscope",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": ["Kill everyone in the workout area"]
+            },
+            {
+                "name": "Dubai - On Top of the World",
+                "targets": ["Carl Ingram", "Marcus Stuyvesant"],
+                "disguises": [
+                  "Skydiving Suit (starting suit)",
+                  "Ashen Suit (changed into automatically)",
+                  "Art Crew",
+                  "Event Security",
+                  "Event Staff",
+                  "Famous Chef",
+                  "Helicopter Pilot",
+                  "Ingram's Bodyguard",
+                  "Kitchen Staff",
+                  "Maintenance Staff",
+                  "Penthouse Guard",
+                  "Penthouse Staff",
+                  "The Assassin"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "SMG",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Folding Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Ornate Scimitar",
+                  "Scissors",
+                  "Screwdriver",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": ["Push 3 people off the building"]
+            },
+            {
+                "name": "Dartmoor - Death in the Family",
+                "targets": ["Alexa Carlisle"],
+                "disguises": [
+                  "Classic Cut Long Coat Suit (starting suit)",
+                  "Bodyguard",
+                  "Gardener",
+                  "Lawyer",
+                  "Mansion Guard",
+                  "Mansion Staff",
+                  "Photographer",
+                  "Private Investigator",
+                  "Undertaker"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "Barber Razor",
+                  "Cleaver",
+                  "Fire Poker",
+                  "Folding Knife",
+                  "Garden Fork",
+                  "Hatchet",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Saber",
+                  "Scissors",
+                  "Screwdriver",
+                  "Shears",
+                  "Unicorn Horn",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": ["Push 3 people into the grave"]
+            },
+            {
+                "name": "Berlin - Apex Predator",
+                "targets": ["5 ICA Agents"],
+                "disguises": [
+                  "Rave On Suit (secondary starting suit)",
+                  "Bartender",
+                  "Biker",
+                  "Club Crew",
+                  "Club Security",
+                  "Dealer",
+                  "Delivery Guy",
+                  "DJ",
+                  "Florida Man",
+                  "Rolf Hirschmüller",
+                  "Technician"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "Sniper Rifle",
+                  "Battle Axe",
+                  "Combat Knife",
+                  "Concealable Knife",
+                  "Fire Axe",
+                  "Garden Fork",
+                  "Hobby Knife",
+                  "Kitchen Knife",
+                  "Old Axe",
+                  "Scrap Sword",
+                  "Screwdriver",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Chongqing - End of an Era",
+                "targets": ["Hush", "Imogen Royce"],
+                "disguises": [
+                  "Neon City Suit (starting suit)",
+                  "Block Guard",
+                  "Dumpling Cook",
+                  "Facility Analyst",
+                  "Facility Engineer",
+                  "Facility Guard",
+                  "Facility Guard (Masked)",
+                  "Facility Security",
+                  "Homeless Person",
+                  "Perfect Test Subject",
+                  "Researcher",
+                  "Street Guard",
+                  "The Board Member (Angus Pritchard)"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "Sniper Rifle",
+                  "Cleaver",
+                  "Fire Axe",
+                  "Garden Fork",
+                  "Hobby Knife",
+                  "Kitchen Knife",
+                  "Letter Opener",
+                  "Scissors",
+                  "Scrap Sword",
+                  "Screwdriver",
+                  "Stethoscope",
+                  "Tanto",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Mendoza - The Farewell",
+                "targets": ["Don Archibald Yates", "Tamara Vidal"],
+                "disguises": [
+                  "Black & White Tuxedo Set (starting suit)",
+                  "47's Signature Suit with Gloves",
+                  "Asado Chef",
+                  "Bodyguard",
+                  "Chief Winemaker",
+                  "Corvo Black",
+                  "Gaucho",
+                  "Head of Security",
+                  "Lawyer",
+                  "Mercenary",
+                  "Providence Herald",
+                  "Sommelier",
+                  "Tactical Wetsuit",
+                  "Tango Musician",
+                  "Waiter",
+                  "Winery Worker"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Assault Rifle",
+                  "Shotgun",
+                  "SMG",
+                  "Sniper Rifle",
+                  "Broadsword",
+                  "Fire Axe",
+                  "Fire Poker",
+                  "Fishing Line",
+                  "Garden Fork",
+                  "Grape Knife",
+                  "Hatchet",
+                  "Hobby Knife",
+                  "Icicle",
+                  "Jarl's Pirate Saber",
+                  "Kitchen Knife",
+                  "Machete",
+                  "Old Axe",
+                  "Sapper's Axe",
+                  "Screwdriver",
+                  "Shears",
+                  "Explosive",
+                  "Poison",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Carpathian Mountains - Untouchable",
+                "targets": ["Arthur Edwards"],
+                "disguises": [
+                  "47's Signature Suit (default suit, Reflection starting location)",
+                  "Subject 47 (default suit, Laboratory starting location)",
+                  "Office Staff",
+                  "Providence Commando",
+                  "Providence Commando Leader",
+                  "Providence Doctor",
+                  "Providence Elite Guard",
+                  "Providence Security Guard"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Shotgun",
+                  "SMG",
+                  "Fiber Wire",
+                  "Fire Axe",
+                  "Icicle",
+                  "Rusty Screwdriver",
+                  "Explosive",
+                ],
+                "wildcards": []
+            },
+            {
+                "name": "Ambrose Island - Shadows in the Water",
+                "targets": ["Noel Crest", "Sinhi Venthan"],
+                "disguises": [
+                  "Guerilla Wetsuit (Starting Suit)",
+                  "Cook",
+                  "Engineer",
+                  "Hippie",
+                  "Metal Worker",
+                  "Militia Soldier",
+                  "Pirate",
+                  "The Buccaneer"
+                ],
+                "weapons": [
+                  "Pistol",
+                  "Shotgun",
+                  "SMG",
+                  "Assault Rifle",
+                  "Barber Razor",
+                  "Cleaver",
+                  "Fishing Line",
+                  "Folding Knife",
+                  "Garden Fork",
+                  "Hobby Knife",
+                  "Hook",
+                  "Jarl's Pirate Saber",
+                  "Kitchen Knife",
+                  "Kukri Machete",
+                  "Letter Opener",
+                  "Meat Fork",
+                  "Old Axe",
+                  "Scissors",
+                  "Scrap Sword",
+                  "Screwdriver",
+                  "Seashell",
+                  "Shears",
+                  "Starfish",
+                  "Poison",
+                  "Explosive",
+                ],
+                "wildcards": []
+            },
+            // Add more missions as needed
         ];
-
-        var killTypesMap = {
-            melee: "melee",
-            firearm: "firearms",
-            accident: "accidents",
-            generic: "kills"
-        };
     </script>
-    <script>
-        function GetRandomElement(list) {
-            return list[Math.floor(Math.random() * list.length)];
-        }
 
-        function RandomDisguise(randomMission) {
-            if (randomMission.disguises.length == 0) {
-                randomMission.disguises = randomMission.disguisesReset.slice();
-            }
-
-            return GetAndRemove(randomMission.disguises, GetRandomElement(randomMission.disguises));
-        }
-
-        function RandomMethod(randomMission) {
-            if (randomMission.melee.length == 0) {
-                randomMission.melee = randomMission.meleeReset.slice();
-            }
-
-            return GetAndRemove(randomMission.melee, GetRandomElement(randomMission.melee));
-        }
-        
-        function GetAndRemove(array, item) {
-            const index = array.indexOf(item);
-            if (index > -1) {
-                return array.splice(index, 1);
-            }
-        }
-        
-        function RandomExtra(randomMission) {
-            var allExtras = extras.concat(randomMission.extras);
-            if (allExtras.length == 0) {
-                extras = extrasReset.slice();
-                randomMission.extras = randomMission.extrasReset.slice();
-            }
-            
-            var extra = GetRandomElement(allExtras, false);
-            
-            if (extras.indexOf(extra) > -1)
-                return GetAndRemove(extras, extra);
-            else
-                return GetAndRemove(randomMission.extras, extra);
-        }
-        
-        function Go() {
-            $('#targets').html('');
-            $('#wildcard').addClass('hidden invisible');
-            
-            var randomMission = GetRandomElement(missions);
-            var targets = randomMission.targetList;
-            var disguise, method;
-            var extra = RandomExtra(randomMission);
-
-            $('#mission').html(randomMission.missionTitle);
-
-            for (let index = 0; index < targets.length; index++) {
-                const element = targets[index];
-
-                disguise = RandomDisguise(randomMission);
-                method = RandomMethod(randomMission);
-
-                $('#targets').append(`<p class="invisible">You must kill <span class="target">${targets[index]}</span></p><p class="invisible">disguised as <span class="disguise">${disguise}</span></p><p class="invisible">with <span class="method">${method}</span></p>`);
-            }
-
-            $('#wildcard').html(extra);
-            
-            $('#reroll-button').addClass('hidden');
-        }
-        
-        function Proceed() {
-            $('#wildcard').removeClass('hidden');
-            $('.invisible').first().removeClass('invisible');
-            
-            if (!$('#wildcard').hasClass('invisible'))
-                $('#reroll-button').removeClass('hidden');
-        }
-
-        $(document).ready(function() {
-            $('body').keydown(function(e) {
-                if (e.which == 82)
-                    Go();               
-                else if (e.which == 32)
-                    Proceed();
-            });
-            
-            $('#reroll-button').click(function(e) {
-                e.stopPropagation();                
-                Go(); 
-            });
-
-            $('body').click(function(e) {
-                Proceed();
-            });
-            
-            for (let index = 0; index < missions.length; index++) {
-                const mission = missions[index];
-                
-                mission.diguisesReset = mission.disguises.slice();
-                mission.meleeReset = mission.melee.slice();
-                mission.extrasReset = mission.extras.slice();
-                
-                extrasReset = extras.slice();
-            }
-            
-            Go();
-        });
-    </script>
 </body>
 </html>
